@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Zen Market — Customer Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Rajdhani:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07090d;--surface:#0d1018;--surface2:#121621;
+  --border:#1e2333;--border2:#2a3050;
+  --accent:#00e5ff;--accent2:#0099ff;
+  --green:#00ffb3;--red:#ff4d6d;--yellow:#ffd166;
+  --text:#d8e0f0;--text2:#7b8aaa;--text3:#3d4660;
+}
+html,body{width:100%;height:100%}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+body.leaving{animation:pageOut .3s ease forwards}
+@keyframes pageOut{to{opacity:0;transform:scale(.98)}}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(0,229,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.03) 1px,transparent 1px);background-size:52px 52px;-webkit-mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,#000 30%,transparent 100%);mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,#000 30%,transparent 100%)}
+.bg-scanlines{position:fixed;inset:0;z-index:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,229,255,.009) 2px,rgba(0,229,255,.009) 4px)}
+.bg-orb{position:fixed;width:640px;height:640px;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);z-index:0;pointer-events:none;background:radial-gradient(circle,rgba(0,229,255,.065) 0%,transparent 65%);animation:orbFloat 7s ease-in-out infinite}
+@keyframes orbFloat{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-53%) scale(1.07)}}
+.bg-orb2{position:fixed;width:260px;height:260px;border-radius:50%;bottom:8%;right:8%;z-index:0;pointer-events:none;background:radial-gradient(circle,rgba(0,153,255,.045) 0%,transparent 70%);animation:orbFloat2 9s ease-in-out infinite}
+@keyframes orbFloat2{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.card{position:relative;z-index:1;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:44px;width:100%;max-width:460px;margin:24px;box-shadow:0 0 0 1px rgba(0,229,255,.04),0 20px 60px rgba(0,0,0,.6),0 0 100px rgba(0,229,255,.06);animation:fadeUp .45s cubic-bezier(.22,.68,0,1.2) both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.card::before{content:'';position:absolute;top:-1px;left:15%;right:15%;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);border-radius:999px;opacity:.7}
+.card::after{content:'';position:absolute;top:12px;right:12px;width:18px;height:18px;border-top:1.5px solid rgba(0,229,255,.35);border-right:1.5px solid rgba(0,229,255,.35);border-radius:0 4px 0 0}
+.logo-wrap{text-align:center;margin-bottom:6px}
+.logo{font-family:'Rajdhani',sans-serif;font-size:2rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px}
+.logo-zen{color:var(--text)}
+.logo-mkt{color:var(--accent);text-shadow:0 0 22px rgba(0,229,255,.55)}
+.logo-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 12px rgba(0,255,179,.75);animation:pulse 2.2s ease-in-out infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.75)}}
+.tagline{font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.15em;color:var(--text3);text-align:center;text-transform:uppercase;margin-bottom:24px}
+.store-badge{display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(0,255,179,.05);border:1px solid rgba(0,255,179,.14);border-radius:8px;padding:8px 14px;margin-bottom:24px;font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--green);letter-spacing:.08em}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.8s ease-in-out infinite;flex-shrink:0}
+/* tabs */
+.tabs{display:flex;margin-bottom:22px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;padding:3px;gap:3px}
+.tab{flex:1;padding:9px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;background:transparent;color:var(--text3);border:none;border-radius:7px;transition:all .15s}
+.tab.active{background:rgba(0,229,255,.12);color:var(--accent);box-shadow:0 0 12px rgba(0,229,255,.08)}
+/* form */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.15em;color:var(--text3);text-transform:uppercase;margin-bottom:7px}
+.input-wrap{position:relative}
+.input-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.4;pointer-events:none;line-height:1}
+.form-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px 14px 11px 40px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.85rem;outline:none;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none}
+.form-input:focus{border-color:var(--accent);background:rgba(0,229,255,.025);box-shadow:0 0 0 3px rgba(0,229,255,.1)}
+.form-input::placeholder{color:var(--text3)}
+.toggle-pw{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:4px}
+.btn-main{width:100%;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:.08em;text-transform:uppercase;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);color:#07090d;border:none;border-radius:10px;padding:13px;cursor:pointer;box-shadow:0 0 28px rgba(0,229,255,.25),0 4px 16px rgba(0,0,0,.4);transition:all .15s;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px}
+.btn-main:hover:not(:disabled){box-shadow:0 0 44px rgba(0,229,255,.4),0 6px 20px rgba(0,0,0,.4);transform:translateY(-2px)}
+.btn-main:active:not(:disabled){transform:translateY(0)}
+.btn-main:disabled{opacity:.65;cursor:not-allowed;transform:none}
+.spinner{width:17px;height:17px;border:2.5px solid rgba(7,9,13,.25);border-top-color:#07090d;border-radius:50%;animation:spin .65s linear infinite;display:none;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn-main.loading .spinner{display:block}
+.btn-main.loading .btn-text{display:none}
+.alert{font-family:'JetBrains Mono',monospace;font-size:.7rem;border-radius:8px;padding:10px 14px;margin-bottom:14px;text-align:center;letter-spacing:.04em;display:none}
+.alert.show{display:block}
+.alert-error{color:var(--red);background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.22);animation:shake .3s ease}
+.alert-success{color:var(--green);background:rgba(0,255,179,.07);border:1px solid rgba(0,255,179,.22)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.card-footer{margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.footer-txt{font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.1em;color:var(--text3);text-transform:uppercase}
+.footer-link{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--text3);text-decoration:none;letter-spacing:.08em;text-transform:uppercase;transition:color .12s}
+.footer-link:hover{color:var(--accent)}
+/* Email verification styles */
+.verify-row{display:flex;gap:8px;align-items:flex-end}
+.verify-row .input-wrap{flex:1}
+.btn-send-code{flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);color:var(--accent);border-radius:10px;padding:11px 13px;cursor:pointer;white-space:nowrap;transition:all .15s;height:44px}
+.btn-send-code:hover:not(:disabled){background:rgba(0,229,255,.2);box-shadow:0 0 14px rgba(0,229,255,.2)}
+.btn-send-code:disabled{opacity:.45;cursor:not-allowed}
+.verified-badge{display:none;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--green);letter-spacing:.08em;margin-top:6px}
+.verified-badge.show{display:flex}
+.verify-code-group{display:none}
+.verify-code-group.show{display:block}
+.countdown{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--yellow);margin-top:5px;letter-spacing:.06em}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-scanlines"></div>
+<div class="bg-orb"></div>
+<div class="bg-orb2"></div>
+
+<div class="card">
+  <div class="logo-wrap">
+    <div class="logo"><span class="logo-zen">ZEN</span><span class="logo-mkt">MKT</span><span class="logo-dot"></span></div>
+  </div>
+  <div class="tagline">// Customer Portal — Shop Online</div>
+
+  <div class="store-badge">
+    <div class="status-dot"></div>
+    STORE OPEN &nbsp;·&nbsp; CASH ON DELIVERY ONLY
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-login" onclick="switchTab('login')">Login</button>
+    <button class="tab" id="tab-register" onclick="switchTab('register')">Register</button>
+  </div>
+
+  <div id="alert-error" class="alert alert-error"></div>
+  <div id="alert-success" class="alert alert-success"></div>
+
+  <!-- LOGIN FORM -->
+  <div id="form-login">
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <div class="input-wrap">
+        <span class="input-icon">📧</span>
+        <input class="form-input" type="email" id="l-email" placeholder="you@example.com" autocomplete="email"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <div class="input-wrap">
+        <span class="input-icon">🔒</span>
+        <input class="form-input" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"/>
+        <button class="toggle-pw" type="button" onclick="togglePw('l-pass',this)">👁</button>
+      </div>
+    </div>
+    <button class="btn-main" id="btn-login" onclick="doLogin()">
+      <span class="spinner"></span>
+      <span class="btn-text">Login to Shop →</span>
+    </button>
+  </div>
+
+  <!-- REGISTER FORM -->
+  <div id="form-register" style="display:none">
+    <div class="form-group">
+      <label class="form-label">Full Name</label>
+      <div class="input-wrap">
+        <span class="input-icon">👤</span>
+        <input class="form-input" type="text" id="r-name" placeholder="Juan dela Cruz"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <div class="verify-row">
+        <div class="input-wrap">
+          <span class="input-icon">📧</span>
+          <input class="form-input" type="email" id="r-email" placeholder="you@example.com" oninput="onEmailChange()"/>
+        </div>
+        <button class="btn-send-code" id="btn-send-code" onclick="sendVerificationCode()">Send Code</button>
+      </div>
+      <div class="verified-badge" id="verified-badge">✅ Email verified!</div>
+    </div>
+    <div class="form-group verify-code-group" id="verify-code-group">
+      <label class="form-label">Verification Code</label>
+      <div class="input-wrap">
+        <span class="input-icon">🔐</span>
+        <input class="form-input" type="text" id="r-code" placeholder="Enter 6-digit code" maxlength="6" oninput="onCodeInput()"/>
+      </div>
+      <div class="countdown" id="code-countdown"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <div class="input-wrap">
+        <span class="input-icon">🔒</span>
+        <input class="form-input" type="password" id="r-pass" placeholder="Min. 6 characters"/>
+        <button class="toggle-pw" type="button" onclick="togglePw('r-pass',this)">👁</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confirm Password</label>
+      <div class="input-wrap">
+        <span class="input-icon">🔒</span>
+        <input class="form-input" type="password" id="r-pass2" placeholder="Re-enter password"/>
+      </div>
+    </div>
+    <button class="btn-main" id="btn-register" onclick="doRegister()">
+      <span class="spinner"></span>
+      <span class="btn-text">Create Account →</span>
+    </button>
+  </div>
+
+  <div class="card-footer">
+    <div class="footer-txt">v1.0 · COD Only</div>
+    <a class="footer-link" href="login.html">← Admin Login</a>
+  </div>
+</div>
+
+<script>
+// ── EmailJS Config ──────────────────────────────────────────────
+emailjs.init('3W2wwTK90SQ-vsnXS');
+var EJ_SERVICE   = 'service_ewvvdej';
+var EJ_VERIFY_T  = 'template_jnks44k';
+
+// ── Storage helpers ─────────────────────────────────────────────
+var CUSTOMERS_KEY='zm_customers';
+function getCustomers(){try{return JSON.parse(localStorage.getItem(CUSTOMERS_KEY))||[];}catch(e){return[];}}
+function saveCustomers(c){localStorage.setItem(CUSTOMERS_KEY,JSON.stringify(c));}
+
+// ── Alert helpers ────────────────────────────────────────────────
+function showErr(msg){
+  var e=document.getElementById('alert-error'),s=document.getElementById('alert-success');
+  s.classList.remove('show');
+  e.textContent='⚠ '+msg;
+  void e.offsetWidth;
+  e.className='alert alert-error show';
+}
+function showSucc(msg){
+  var e=document.getElementById('alert-error'),s=document.getElementById('alert-success');
+  e.classList.remove('show');
+  s.textContent='✓ '+msg;
+  s.className='alert alert-success show';
+}
+function clearAlerts(){
+  document.getElementById('alert-error').classList.remove('show');
+  document.getElementById('alert-success').classList.remove('show');
+}
+
+// ── Tab switching ────────────────────────────────────────────────
+function switchTab(tab){
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-register').classList.toggle('active',tab==='register');
+  document.getElementById('form-login').style.display=tab==='login'?'':'none';
+  document.getElementById('form-register').style.display=tab==='register'?'':'none';
+  clearAlerts();
+}
+
+function togglePw(id,btn){
+  var inp=document.getElementById(id);
+  inp.type=inp.type==='password'?'text':'password';
+  btn.textContent=inp.type==='password'?'👁':'🙈';
+}
+
+function setLoading(btnId,loading){
+  var btn=document.getElementById(btnId);
+  btn.classList.toggle('loading',loading);
+  btn.disabled=loading;
+}
+
+// ── Login ────────────────────────────────────────────────────────
+function doLogin(){
+  var email=document.getElementById('l-email').value.trim().toLowerCase();
+  var pass=document.getElementById('l-pass').value;
+  if(!email||!pass){showErr('Please fill in all fields.');return;}
+  setLoading('btn-login',true);
+  setTimeout(function(){
+    var c=getCustomers().find(function(x){return x.email===email&&x.password===pass;});
+    if(!c){setLoading('btn-login',false);showErr('Invalid email or password.');return;}
+    sessionStorage.setItem('zm_cust_session',JSON.stringify({id:c.id,name:c.name,email:c.email}));
+    document.body.classList.add('leaving');
+    setTimeout(function(){window.location.href='shop.html';},280);
+  },700);
+}
+
+// ── Email Verification ───────────────────────────────────────────
+var verifyState={
+  code: null,
+  email: null,
+  verified: false,
+  timer: null,
+  expiry: null
+};
+
+function onEmailChange(){
+  // Reset verification if email changes
+  if(verifyState.verified){
+    verifyState.verified=false;
+    verifyState.email=null;
+    document.getElementById('verified-badge').classList.remove('show');
+    document.getElementById('verify-code-group').classList.remove('show');
+    document.getElementById('btn-send-code').disabled=false;
+    document.getElementById('btn-send-code').textContent='Send Code';
+    clearCountdown();
+  }
+}
+
+function onCodeInput(){
+  var input=document.getElementById('r-code').value.trim();
+  if(input.length===6){
+    checkCode(input);
+  }
+}
+
+function checkCode(input){
+  if(!verifyState.code||!verifyState.expiry){showErr('No verification code sent yet.');return;}
+  if(Date.now()>verifyState.expiry){showErr('Code expired. Please request a new one.');resetVerify();return;}
+  if(input===verifyState.code){
+    verifyState.verified=true;
+    clearCountdown();
+    document.getElementById('verify-code-group').classList.remove('show');
+    document.getElementById('verified-badge').classList.add('show');
+    document.getElementById('btn-send-code').textContent='✓ Verified';
+    document.getElementById('btn-send-code').disabled=true;
+    showSucc('Email verified! You can now create your account.');
+  } else {
+    showErr('Incorrect code. Please try again.');
+    document.getElementById('r-code').value='';
+  }
+}
+
+function resetVerify(){
+  clearCountdown();
+  verifyState={code:null,email:null,verified:false,timer:null,expiry:null};
+  document.getElementById('verify-code-group').classList.remove('show');
+  document.getElementById('verified-badge').classList.remove('show');
+  document.getElementById('btn-send-code').disabled=false;
+  document.getElementById('btn-send-code').textContent='Send Code';
+  document.getElementById('r-code').value='';
+}
+
+function clearCountdown(){
+  if(verifyState.timer){clearInterval(verifyState.timer);verifyState.timer=null;}
+  document.getElementById('code-countdown').textContent='';
+}
+
+function startCountdown(){
+  clearCountdown();
+  verifyState.timer=setInterval(function(){
+    var ms=verifyState.expiry-Date.now();
+    if(ms<=0){
+      clearCountdown();
+      document.getElementById('code-countdown').textContent='⏱ Code expired. Click "Send Code" to resend.';
+      document.getElementById('btn-send-code').disabled=false;
+      document.getElementById('btn-send-code').textContent='Resend Code';
+      return;
+    }
+    var m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000);
+    document.getElementById('code-countdown').textContent='⏱ Code expires in '+m+':'+(s<10?'0':'')+s;
+  },1000);
+}
+
+function sendVerificationCode(){
+  var email=document.getElementById('r-email').value.trim().toLowerCase();
+  var name=document.getElementById('r-name').value.trim()||'Customer';
+  if(!email){showErr('Please enter your email address first.');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showErr('Please enter a valid email address.');return;}
+
+  // Check if already registered
+  if(getCustomers().find(function(x){return x.email===email;})){
+    showErr('This email is already registered. Please login instead.');return;
+  }
+
+  var btn=document.getElementById('btn-send-code');
+  btn.disabled=true;
+  btn.textContent='Sending...';
+
+  // Generate 6-digit code
+  var code=Math.floor(100000+Math.random()*900000).toString();
+  verifyState.code=code;
+  verifyState.email=email;
+  verifyState.expiry=Date.now()+(10*60*1000); // 10 minutes
+
+  emailjs.send(EJ_SERVICE, EJ_VERIFY_T, {
+    to_name: name,
+    to_email: email,
+    code: code
+  }).then(function(){
+    btn.textContent='Resend Code';
+    btn.disabled=false;
+    document.getElementById('verify-code-group').classList.add('show');
+    document.getElementById('r-code').value='';
+    startCountdown();
+    showSucc('Verification code sent to '+email+'! Check your inbox.');
+  }, function(err){
+    console.error('EmailJS error:',err);
+    btn.disabled=false;
+    btn.textContent='Send Code';
+    showErr('Failed to send email. Please check your connection and try again.');
+    verifyState.code=null;
+  });
+}
+
+// ── Register ─────────────────────────────────────────────────────
+function doRegister(){
+  var name=document.getElementById('r-name').value.trim();
+  var email=document.getElementById('r-email').value.trim().toLowerCase();
+  var pass=document.getElementById('r-pass').value;
+  var pass2=document.getElementById('r-pass2').value;
+  if(!name||!email||!pass||!pass2){showErr('Please fill in all fields.');return;}
+  if(!verifyState.verified){showErr('Please verify your email address first.');return;}
+  if(pass.length<6){showErr('Password must be at least 6 characters.');return;}
+  if(pass!==pass2){showErr('Passwords do not match.');return;}
+  setLoading('btn-register',true);
+  setTimeout(function(){
+    var customers=getCustomers();
+    if(customers.find(function(x){return x.email===email;})){
+      setLoading('btn-register',false);showErr('Email already registered. Please login.');return;
+    }
+    var nc={id:'cust_'+Date.now(),name:name,email:email,password:pass,createdAt:new Date().toISOString()};
+    customers.push(nc);saveCustomers(customers);
+    sessionStorage.setItem('zm_cust_session',JSON.stringify({id:nc.id,name:nc.name,email:nc.email}));
+    showSucc('Account created! Redirecting...');
+    setTimeout(function(){window.location.href='shop.html';},800);
+  },700);
+}
+
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter')return;
+  var isLogin=document.getElementById('form-login').style.display!=='none';
+  if(isLogin)doLogin();else doRegister();
+});
+</script>
+</body>
+</html>

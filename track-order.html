@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Zen Market — Track Orders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080a0e;--surface:#0f1117;--surface2:#151820;
+  --border:#1e2230;--border2:#252a3a;
+  --accent:#00e5ff;--green:#00ff9d;--yellow:#ffd166;--red:#ff4d6d;--purple:#c084fc;
+  --text:#dce3f0;--text2:#8b95b0;--text3:#4a5068;--sw:230px;
+}
+html,body{height:100%}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,229,255,.01) 2px,rgba(0,229,255,.01) 4px)}
+.page-wrap{flex:1;min-width:0;margin-left:var(--sw);display:flex;flex-direction:column;position:relative;z-index:1;opacity:0;animation:pageIn .3s ease forwards}
+@keyframes pageIn{to{opacity:1}}
+body.leaving .page-wrap{animation:pageOut .25s ease forwards}
+@keyframes pageOut{to{opacity:0;transform:translateY(-8px)}}
+
+/* SIDEBAR */
+.sidebar{width:var(--sw);min-height:100vh;background:var(--surface);border-right:1px solid var(--border2);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:10}
+.sb-logo{padding:24px 20px 18px;border-bottom:1px solid var(--border)}
+.logo{font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.logo span{color:var(--accent);text-shadow:0 0 14px rgba(0,229,255,.5)}
+.logo-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-left:4px;vertical-align:middle;box-shadow:0 0 8px rgba(0,255,157,.7);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.sb-sub{font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.12em;color:var(--text3);text-transform:uppercase;margin-top:4px}
+.nav{flex:1;padding:16px 10px;display:flex;flex-direction:column;gap:3px}
+.nav-lbl{font-family:'JetBrains Mono',monospace;font-size:.55rem;letter-spacing:.16em;color:var(--text3);text-transform:uppercase;padding:0 10px;margin:10px 0 5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:.875rem;font-weight:600;color:var(--text2);text-decoration:none;border:1px solid transparent;background:none;cursor:pointer;width:100%;text-align:left;transition:all .12s;font-family:'Space Grotesk',sans-serif}
+.nav-item:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.nav-item.active{background:rgba(0,229,255,.08);color:var(--accent);border-color:rgba(0,229,255,.15)}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.nav-badge{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:.58rem;padding:1px 7px;border-radius:3px}
+.nb-yellow{background:rgba(255,209,102,.15);color:var(--yellow)}
+.nb-purple{background:rgba(192,132,252,.15);color:var(--purple)}
+.sb-footer{padding:14px 10px;border-top:1px solid var(--border)}
+.user-card{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:8px;background:var(--surface2);border:1px solid var(--border2)}
+.avatar{width:30px;height:30px;border-radius:7px;background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.2);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:.82rem;font-weight:700;color:var(--accent);flex-shrink:0}
+.u-name{font-size:.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+.u-role{font-family:'JetBrains Mono',monospace;font-size:.55rem;color:var(--text3);text-transform:uppercase}
+.logout-btn{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:4px;transition:color .12s;flex-shrink:0}
+.logout-btn:hover{color:var(--red)}
+
+/* MAIN */
+.main{flex:1;width:100%;padding:32px 28px}
+.page{display:none}
+.page.active{display:block;animation:pageIn .25s ease}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px}
+.page-title{font-family:'Rajdhani',sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.page-title span{color:var(--accent)}
+
+/* DELIVERY INFO BOX */
+.delivery-info{background:var(--surface);border:1px solid var(--border2);border-radius:12px;overflow:hidden;margin-bottom:24px}
+.di-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.di-hdr-txt{font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:.14em;color:var(--text3);text-transform:uppercase}
+.di-table{width:100%;border-collapse:collapse}
+.di-table th{padding:9px 16px;font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);font-weight:400;text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)}
+.di-table td{padding:9px 16px;font-size:.84rem;border-bottom:1px solid var(--border);color:var(--text2)}
+.di-table tr:last-child td{border-bottom:none}
+.di-table td:first-child{font-weight:600;color:var(--text)}
+.di-table td:last-child{font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--accent)}
+
+/* ORDERS */
+.orders-empty{text-align:center;padding:80px 20px;color:var(--text3)}
+.oe-icon{font-size:56px;opacity:.35;margin-bottom:14px}
+.oe-title{font-family:'Rajdhani',sans-serif;font-size:1.1rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:7px}
+.oe-sub{font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.07em}
+
+.order-card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;overflow:hidden;margin-bottom:14px;transition:border-color .15s}
+.order-card:hover{border-color:rgba(0,229,255,.2)}
+.oc-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px}
+.oc-id-wrap{display:flex;align-items:center;gap:10px}
+.oc-id{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--accent);font-weight:500}
+.oc-date{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--text3)}
+.oc-status{font-family:'JetBrains Mono',monospace;font-size:.65rem;padding:3px 10px;border-radius:4px;letter-spacing:.06em;font-weight:500}
+.status-pending{background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25);color:var(--yellow)}
+.status-processing{background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.25);color:var(--accent)}
+.status-shipped{background:rgba(192,132,252,.08);border:1px solid rgba(192,132,252,.25);color:var(--purple)}
+.status-received{background:rgba(0,255,157,.08);border:1px solid rgba(0,255,157,.25);color:var(--green)}
+.status-cancelled{background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.25);color:var(--red)}
+.oc-body{padding:14px 18px}
+.oc-items{margin-bottom:12px}
+.oc-item-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.84rem}
+.oc-item-row:last-child{border-bottom:none}
+.oc-item-name{font-weight:600}
+.oc-item-qty{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text3)}
+.oc-item-price{font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--yellow)}
+.oc-meta{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text3)}
+.oc-meta span{display:flex;align-items:center;gap:5px}
+.oc-total-row{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--border2);margin-bottom:14px}
+.oc-total-lbl{font-size:.84rem;font-weight:600}
+.oc-total-val{font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;color:var(--yellow)}
+.oc-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn-received{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.82rem;background:linear-gradient(135deg,var(--green),#00cc7a);color:#080a0e;border:none;border-radius:8px;padding:9px 18px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .14s;box-shadow:0 0 18px rgba(0,255,157,.18)}
+.btn-received:hover{box-shadow:0 0 28px rgba(0,255,157,.32);transform:translateY(-1px)}
+.btn-cancel{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.82rem;background:transparent;color:var(--red);border:1px solid rgba(255,77,109,.28);border-radius:8px;padding:9px 18px;cursor:pointer;transition:all .14s}
+.btn-cancel:hover{background:rgba(255,77,109,.09);border-color:var(--red)}
+.btn-review-view{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.82rem;background:transparent;color:var(--purple);border:1px solid rgba(192,132,252,.28);border-radius:8px;padding:9px 18px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .14s}
+.btn-review-view:hover{background:rgba(192,132,252,.09);border-color:var(--purple)}
+.cancel-reason-box{background:rgba(255,77,109,.06);border:1px solid rgba(255,77,109,.18);border-radius:8px;padding:10px 14px;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:.68rem;color:rgba(255,77,109,.8)}
+.cancel-reason-lbl{color:var(--red);font-weight:700;margin-bottom:4px}
+.already-reviewed-tag{display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:.65rem;padding:4px 10px;border-radius:5px;background:rgba(192,132,252,.09);border:1px solid rgba(192,132,252,.2);color:var(--purple)}
+
+/* REVIEWS PAGE */
+.reviews-empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.review-card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:18px;margin-bottom:12px}
+.rv-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:10px}
+.rv-order-id{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--accent)}
+.rv-date{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--text3)}
+.rv-item{padding:10px 0;border-bottom:1px solid var(--border)}
+.rv-item:last-child{border-bottom:none}
+.rv-item-name{font-weight:700;font-size:.86rem;margin-bottom:6px}
+.stars-display{color:var(--yellow);font-size:15px;letter-spacing:2px;margin-bottom:5px}
+.rv-comment{font-size:.83rem;color:var(--text2);line-height:1.55;font-style:italic}
+.rv-comment::before{content:'"'}
+.rv-comment::after{content:'"'}
+
+/* ABOUT PAGE */
+.about-hero{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:32px;margin-bottom:18px;position:relative;overflow:hidden}
+.about-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--green));box-shadow:0 0 20px rgba(0,229,255,.4)}
+.ab-logo-row{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.ab-icon{width:50px;height:50px;border-radius:12px;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);display:flex;align-items:center;justify-content:center;font-size:22px}
+.ab-name{font-family:'Rajdhani',sans-serif;font-size:1.65rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.ab-name span{color:var(--accent)}
+.ab-tag{font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.12em;color:var(--text3);text-transform:uppercase;margin-top:3px}
+.ab-desc{font-size:.88rem;color:var(--text2);line-height:1.75;margin-bottom:16px}
+.ab-desc strong{color:var(--text)}
+.ab-tags{display:flex;flex-wrap:wrap;gap:7px}
+.tag{font-family:'JetBrains Mono',monospace;font-size:.64rem;padding:4px 11px;border-radius:4px;border:1px solid var(--border2);color:var(--text2)}
+.tc{border-color:rgba(0,229,255,.3);color:var(--accent);background:rgba(0,229,255,.06)}
+.tg{border-color:rgba(0,255,157,.3);color:var(--green);background:rgba(0,255,157,.06)}
+.ab-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:16px}
+.ab-card{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:20px}
+.ab-card-ico{font-size:18px;margin-bottom:9px}
+.ab-card-title{font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text);margin-bottom:9px}
+.ab-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+.ab-list li{font-size:.8rem;color:var(--text2);display:flex;align-items:flex-start;gap:7px;line-height:1.5}
+.ab-list li::before{content:'→';font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:.68rem;margin-top:2px;flex-shrink:0}
+.cod-info-box{background:rgba(0,255,157,.05);border:1px solid rgba(0,255,157,.15);border-radius:10px;padding:16px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start}
+.cod-icon{font-size:24px;flex-shrink:0}
+.cod-title{font-weight:700;color:var(--green);margin-bottom:4px;font-size:.88rem}
+.cod-sub{font-size:.82rem;color:var(--text2);line-height:1.55}
+
+/* MODALS */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(4,6,12,.88);backdrop-filter:blur(6px);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:28px;width:100%;max-width:480px;margin:20px;animation:slideUp .2s ease;box-shadow:0 0 60px rgba(0,229,255,.06);max-height:90vh;overflow-y:auto}
+.modal-sm{max-width:400px}
+@keyframes slideUp{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-hdr{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.modal-ico{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:1.15rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.warning-box{background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.22);border-radius:9px;padding:14px 16px;margin-bottom:16px}
+.wb-title{font-weight:700;color:var(--yellow);font-size:.88rem;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.wb-body{font-size:.82rem;color:rgba(255,209,102,.8);line-height:1.65}
+.wb-body strong{color:var(--yellow)}
+.confirm-input-wrap{margin-top:12px}
+.confirm-lbl{font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.13em;color:var(--text3);text-transform:uppercase;margin-bottom:7px;display:block}
+.confirm-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:9px 12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.82rem;outline:none;transition:border-color .14s,box-shadow .14s;text-align:center;letter-spacing:.1em;text-transform:uppercase}
+.confirm-input:focus{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(255,209,102,.1)}
+.confirm-input::placeholder{color:var(--text3)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+.btn-ghost{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.82rem;background:transparent;color:var(--text2);border:1px solid var(--border2);padding:9px 18px;border-radius:7px;cursor:pointer;transition:all .12s}
+.btn-ghost:hover{border-color:var(--text2);color:var(--text)}
+.btn-danger{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.82rem;background:var(--red);color:#fff;border:none;padding:9px 18px;border-radius:7px;cursor:pointer;box-shadow:0 0 14px rgba(255,77,109,.18);transition:all .14s}
+.btn-danger:hover:not(:disabled){box-shadow:0 0 22px rgba(255,77,109,.3);transform:translateY(-1px)}
+.btn-danger:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-success{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.82rem;background:linear-gradient(135deg,var(--green),#00cc7a);color:#080a0e;border:none;padding:9px 18px;border-radius:7px;cursor:pointer;box-shadow:0 0 14px rgba(0,255,157,.18);transition:all .14s}
+.btn-success:hover:not(:disabled){box-shadow:0 0 22px rgba(0,255,157,.3);transform:translateY(-1px)}
+.btn-success:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-primary{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.82rem;background:linear-gradient(135deg,var(--accent),#0099ff);color:#080a0e;border:none;padding:9px 18px;border-radius:7px;cursor:pointer;box-shadow:0 0 14px rgba(0,229,255,.18);transition:all .14s}
+.btn-primary:hover:not(:disabled){box-shadow:0 0 22px rgba(0,229,255,.3);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+/* CANCEL FORM */
+.form-group{margin-bottom:14px}
+.form-lbl{display:block;font-family:'JetBrains Mono',monospace;font-size:.61rem;letter-spacing:.14em;color:var(--text3);text-transform:uppercase;margin-bottom:7px}
+.form-select{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:9px 12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.82rem;outline:none;transition:border-color .14s;cursor:pointer}
+.form-select option{background:var(--surface2)}
+.form-select:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(255,77,109,.1)}
+.form-textarea{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:9px 12px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:.82rem;outline:none;min-height:80px;resize:vertical;transition:border-color .14s;line-height:1.5}
+.form-textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(255,77,109,.1)}
+.form-textarea::placeholder{color:var(--text3)}
+/* REVIEW FORM */
+.review-items-list{display:flex;flex-direction:column;gap:16px;margin-bottom:4px}
+.ri-card{background:var(--surface2);border:1px solid var(--border2);border-radius:9px;padding:14px}
+.ri-name{font-weight:700;font-size:.88rem;margin-bottom:9px;color:var(--text)}
+.stars-input{display:flex;gap:5px;margin-bottom:9px;cursor:pointer}
+.star{font-size:22px;color:var(--text3);transition:color .1s,transform .1s;user-select:none}
+.star.active,.star:hover{color:var(--yellow);transform:scale(1.15)}
+.rv-textarea{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:8px 11px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:.82rem;outline:none;min-height:60px;resize:vertical;transition:border-color .14s;line-height:1.5}
+.rv-textarea:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(192,132,252,.1)}
+.rv-textarea::placeholder{color:var(--text3)}
+/* toast */
+#toast-container{position:fixed;bottom:22px;right:22px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{font-family:'Space Grotesk',sans-serif;font-size:.82rem;font-weight:600;padding:11px 16px;border-radius:9px;border:1px solid;display:flex;align-items:center;gap:9px;min-width:210px;animation:toastIn .3s ease;box-shadow:0 4px 24px rgba(0,0,0,.4)}
+.toast.removing{animation:toastOut .3s ease forwards}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(20px)}}
+.toast-success{background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.25);color:var(--green)}
+.toast-error{background:rgba(255,77,109,.08);border-color:rgba(255,77,109,.25);color:var(--red)}
+.toast-info{background:rgba(0,229,255,.08);border-color:rgba(0,229,255,.25);color:var(--accent)}
+.toast-icon{font-size:14px}
+@media(max-width:660px){.sidebar{display:none}.page-wrap{margin-left:0}.main{padding:20px 14px}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="logo">ZEN <span>MKT</span><span class="logo-dot"></span></div>
+    <div class="sb-sub">// Customer Portal</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-lbl">Navigation</div>
+    <a class="nav-item" href="shop.html"><span class="nav-icon">🛍️</span> Shop</a>
+    <button class="nav-item active" id="nav-orders" onclick="showPage('orders')">
+      <span class="nav-icon">📦</span> Track Orders
+      <span class="nav-badge nb-yellow" id="order-badge" style="display:none">0</span>
+    </button>
+    <button class="nav-item" id="nav-reviews" onclick="showPage('reviews')">
+      <span class="nav-icon">⭐</span> My Reviews
+      <span class="nav-badge nb-purple" id="review-badge" style="display:none">0</span>
+    </button>
+    <button class="nav-item" id="nav-about" onclick="showPage('about')">
+      <span class="nav-icon">ℹ️</span> About
+    </button>
+  </nav>
+  <div class="sb-footer">
+    <div class="user-card">
+      <div class="avatar" id="user-avatar">?</div>
+      <div style="min-width:0">
+        <div class="u-name" id="user-name">Customer</div>
+        <div class="u-role">Customer</div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()" title="Logout">✕</button>
+    </div>
+  </div>
+</aside>
+
+<div class="page-wrap">
+  <main class="main">
+
+    <!-- ═══ ORDERS PAGE ═══ -->
+    <div class="page active" id="page-orders">
+      <div class="topbar">
+        <div class="page-title">TRACK <span>ORDERS</span></div>
+      </div>
+
+      <!-- Delivery time reference -->
+      <div class="delivery-info">
+        <div class="di-hdr">
+          <span>🚚</span>
+          <span class="di-hdr-txt">// Estimated Delivery Times (Cash on Delivery)</span>
+        </div>
+        <table class="di-table">
+          <thead><tr><th>Area</th><th>Estimated Delivery</th></tr></thead>
+          <tbody>
+            <tr><td>Metro Manila</td><td>1–3 business days</td></tr>
+            <tr><td>Luzon</td><td>3–8 business days</td></tr>
+            <tr><td>Visayas</td><td>3–9 business days</td></tr>
+            <tr><td>Mindanao</td><td>3–9 business days</td></tr>
+            <tr><td>Overseas</td><td>7–16 business days</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="orders-list"></div>
+    </div>
+
+    <!-- ═══ REVIEWS PAGE ═══ -->
+    <div class="page" id="page-reviews">
+      <div class="topbar">
+        <div class="page-title">MY <span>REVIEWS</span></div>
+      </div>
+      <div id="reviews-list"></div>
+    </div>
+
+    <!-- ═══ ABOUT PAGE ═══ -->
+    <div class="page" id="page-about">
+      <div class="topbar">
+        <div class="page-title">ABOUT <span>US</span></div>
+      </div>
+
+      <div class="about-hero">
+        <div class="ab-logo-row">
+          <div class="ab-icon">🖥️</div>
+          <div>
+            <div class="ab-name">ZEN <span>MARKET</span></div>
+            <div class="ab-tag">// Gadget Shop — Inventory & E-Commerce System</div>
+          </div>
+        </div>
+        <p class="ab-desc"><strong>Zen Market</strong> is a web-based gadget and PC component shop built to make buying computer parts easy and accessible. Browse through our full catalog of processors, graphics cards, RAM, storage devices, and more — all from the comfort of your device.</p>
+        <p class="ab-desc">We currently offer <strong>Cash on Delivery (COD)</strong> as our payment method, meaning you only pay when your order arrives at your doorstep. No upfront payments required!</p>
+        <div class="ab-tags">
+          <span class="tag tc">HTML</span><span class="tag tc">CSS</span><span class="tag tc">JavaScript</span>
+          <span class="tag tg">PHP</span><span class="tag tg">MySQL</span><span class="tag">Full-Stack</span>
+        </div>
+      </div>
+
+      <div class="cod-info-box">
+        <div class="cod-icon">💵</div>
+        <div>
+          <div class="cod-title">Cash on Delivery (COD) — How it Works</div>
+          <div class="cod-sub">
+            1. Browse and add items to your cart.<br>
+            2. Place your order — no payment needed yet.<br>
+            3. We process and ship your order within 1–3 days.<br>
+            4. Receive your package and pay the courier the exact amount.<br>
+            5. Click <strong>"Order Received"</strong> in Track Orders to confirm delivery.<br>
+            6. Leave a review to help other shoppers!
+          </div>
+        </div>
+      </div>
+
+      <div class="ab-grid">
+        <div class="ab-card">
+          <div class="ab-card-ico">⚙️</div>
+          <div class="ab-card-title">What We Offer</div>
+          <ul class="ab-list">
+            <li>PC components — Processors, GPUs, RAM, Storage</li>
+            <li>Peripherals — Keyboards, Mice, Monitors</li>
+            <li>Motherboards, PSUs, Coolers & Cases</li>
+            <li>Real-time stock monitoring</li>
+            <li>Easy search and filter by category</li>
+          </ul>
+        </div>
+        <div class="ab-card">
+          <div class="ab-card-ico">🛡️</div>
+          <div class="ab-card-title">Our Policies</div>
+          <ul class="ab-list">
+            <li>COD only — Pay when you receive your item</li>
+            <li>Do NOT click "Order Received" until item arrives</li>
+            <li>2 consecutive cancellations = 5-hour ordering restriction</li>
+            <li>Cancellation reason required to protect all parties</li>
+            <li>Reviews can only be left after confirmed delivery</li>
+          </ul>
+        </div>
+        <div class="ab-card">
+          <div class="ab-card-ico">👥</div>
+          <div class="ab-card-title">Project Team</div>
+          <ul class="ab-list">
+            <li><strong style="color:var(--text)">Jazzer De Jesus</strong> — Developer</li>
+            <li><strong style="color:var(--text)">Kianiel Mark Bryan Cercado</strong> — Developer</li>
+            <li><strong style="color:var(--text)">Jyron Andrei S. Magpantay</strong> — Developer</li>
+            <li>BS INFO 2D · LSPU · Sir Dungo</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ═══ ORDER RECEIVED WARNING MODAL ═══ -->
+<div class="modal-overlay" id="received-modal">
+  <div class="modal modal-sm">
+    <div class="modal-hdr">
+      <div class="modal-ico" style="background:rgba(0,255,157,.09);border:1px solid rgba(0,255,157,.2)">✅</div>
+      <div class="modal-title" style="color:var(--green)">Confirm Order Received</div>
+    </div>
+
+    <div class="warning-box">
+      <div class="wb-title">⚠️ Important — Please Read Carefully</div>
+      <div class="wb-body">
+        Only click <strong>"Confirm Received"</strong> if you have <strong>physically received and inspected your item(s)</strong>.<br><br>
+        Once confirmed, <strong>this action cannot be undone.</strong> This is your confirmation that the order has been delivered and payment was made to the courier.<br><br>
+        <strong>If you have not yet received your item, please do NOT confirm</strong> — this protects your right to a refund or dispute.
+      </div>
+    </div>
+
+    <div class="confirm-input-wrap">
+      <label class="confirm-lbl">Type <strong style="color:var(--yellow)">RECEIVED</strong> to confirm</label>
+      <input class="confirm-input" type="text" id="confirm-type" placeholder="Type RECEIVED here"/>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeReceivedModal()">Cancel</button>
+      <button class="btn-success" id="btn-confirm-received" onclick="confirmReceived()" disabled>✅ Confirm Received</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ REVIEW MODAL ═══ -->
+<div class="modal-overlay" id="review-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-ico" style="background:rgba(192,132,252,.09);border:1px solid rgba(192,132,252,.2)">⭐</div>
+      <div class="modal-title" style="color:var(--purple)">Leave a Review</div>
+    </div>
+    <p style="font-size:.82rem;color:var(--text2);margin-bottom:18px;line-height:1.55">
+      How was your experience? Rate each item you received and leave a comment to help other shoppers.
+    </p>
+    <div class="review-items-list" id="review-items-list"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="skipReview()">Skip for now</button>
+      <button class="btn-primary" onclick="submitReview()">Submit Reviews ⭐</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CANCEL MODAL ═══ -->
+<div class="modal-overlay" id="cancel-modal">
+  <div class="modal modal-sm">
+    <div class="modal-hdr">
+      <div class="modal-ico" style="background:rgba(255,77,109,.09);border:1px solid rgba(255,77,109,.2)">🚫</div>
+      <div class="modal-title" style="color:var(--red)">Cancel Order</div>
+    </div>
+    <p style="font-size:.82rem;color:var(--text2);margin-bottom:16px;line-height:1.55">Please tell us why you're cancelling. This helps us improve our service. The admin will be notified.</p>
+    <div class="form-group">
+      <label class="form-lbl">Reason for Cancellation</label>
+      <select class="form-select" id="cancel-reason-select">
+        <option value="">-- Select a reason --</option>
+        <option>Changed my mind</option>
+        <option>Ordered by mistake</option>
+        <option>Found a better price elsewhere</option>
+        <option>Item no longer needed</option>
+        <option>Delivery time is too long</option>
+        <option>Financial constraints</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-lbl">Additional Details (Optional)</label>
+      <textarea class="form-textarea" id="cancel-reason-detail" placeholder="Add any additional information here..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeCancelModal()">Go Back</button>
+      <button class="btn-danger" onclick="confirmCancel()">Confirm Cancellation</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+/* ── AUTH ── */
+var session=null;
+try{session=JSON.parse(sessionStorage.getItem('zm_cust_session'));}catch(e){}
+if(!session){window.location.replace('customer-login.html');}
+
+document.getElementById('user-name').textContent=session.name;
+document.getElementById('user-avatar').textContent=session.name.charAt(0).toUpperCase();
+
+var ORDERS_KEY='zm_orders';
+var REVIEWS_KEY='zm_reviews';
+var CANCEL_DATA_KEY='zm_cancel_data';
+var ACTIVITY_KEY='zenmarket_activity';
+var ADMIN_REPORTS_KEY='zm_admin_reports';
+
+var receivingOrderId=null;
+var cancellingOrderId=null;
+var reviewingOrderId=null;
+
+/* ── HELPERS ── */
+function loadOrders(){try{return JSON.parse(localStorage.getItem(ORDERS_KEY))||[];}catch(e){return[];}}
+function saveOrders(arr){localStorage.setItem(ORDERS_KEY,JSON.stringify(arr));}
+function loadReviews(){try{return JSON.parse(localStorage.getItem(REVIEWS_KEY))||[];}catch(e){return[];}}
+function saveReviews(arr){localStorage.setItem(REVIEWS_KEY,JSON.stringify(arr));}
+function getCancelData(){try{return JSON.parse(localStorage.getItem(CANCEL_DATA_KEY))||{};}catch(e){return{};}}
+function saveCancelData(d){localStorage.setItem(CANCEL_DATA_KEY,JSON.stringify(d));}
+function loadAdminReports(){try{return JSON.parse(localStorage.getItem(ADMIN_REPORTS_KEY))||[];}catch(e){return[];}}
+function saveAdminReports(arr){localStorage.setItem(ADMIN_REPORTS_KEY,JSON.stringify(arr));}
+function addActivity(type,text){
+  try{
+    var acts=JSON.parse(localStorage.getItem(ACTIVITY_KEY))||[];
+    acts.push({type:type,text:text,time:'Just now'});
+    if(acts.length>30)acts=acts.slice(-30);
+    localStorage.setItem(ACTIVITY_KEY,JSON.stringify(acts));
+  }catch(e){}
+}
+
+function formatDate(iso){
+  var d=new Date(iso);
+  return d.toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+function isLockedOut(){
+  var data=getCancelData(),d=data[session.id];
+  if(d&&d.lockoutUntil&&Date.now()<d.lockoutUntil)return d.lockoutUntil;
+  return null;
+}
+
+/* ── TOAST ── */
+function showToast(msg,type){
+  type=type||'success';
+  var icons={success:'✓',error:'✕',info:'ℹ'};
+  var c=document.getElementById('toast-container');
+  var t=document.createElement('div');
+  t.className='toast toast-'+type;
+  t.innerHTML='<span class="toast-icon">'+icons[type]+'</span><span>'+msg+'</span>';
+  c.appendChild(t);
+  setTimeout(function(){t.classList.add('removing');setTimeout(function(){t.remove();},300);},4000);
+}
+
+/* ── PAGE SWITCHER ── */
+function showPage(name){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  document.getElementById('page-'+name).classList.add('active');
+  var nb=document.getElementById('nav-'+name);
+  if(nb)nb.classList.add('active');
+  if(name==='orders')renderOrders();
+  if(name==='reviews')renderReviews();
+}
+
+/* ── BADGES ── */
+function updateBadges(){
+  var orders=loadOrders().filter(function(o){return o.customerId===session.id;});
+  var badge=document.getElementById('order-badge');
+  badge.textContent=orders.length;
+  if(orders.length>0)badge.style.display='';else badge.style.display='none';
+
+  var reviews=loadReviews().filter(function(r){return r.customerId===session.id;});
+  var rb=document.getElementById('review-badge');
+  rb.textContent=reviews.length;
+  if(reviews.length>0)rb.style.display='';else rb.style.display='none';
+}
+
+/* ── RENDER ORDERS ── */
+function renderOrders(){
+  var orders=loadOrders().filter(function(o){return o.customerId===session.id;});
+  var reviews=loadReviews();
+  var el=document.getElementById('orders-list');
+  if(!orders.length){
+    el.innerHTML='<div class="orders-empty"><div class="oe-icon">📦</div><div class="oe-title">No Orders Yet</div><div class="oe-sub">// Visit the shop to place your first order</div></div>';
+    return;
+  }
+  var html='';
+  orders.slice().reverse().forEach(function(order){
+    var statusMap={Pending:'status-pending',Processing:'status-processing',Shipped:'status-shipped',Received:'status-received',Cancelled:'status-cancelled'};
+    var statusCls=statusMap[order.status]||'status-pending';
+    var hasReview=reviews.find(function(r){return r.orderId===order.id;});
+    var itemsHtml=order.items.map(function(it){
+      return '<div class="oc-item-row"><span class="oc-item-name">'+it.name+'<span class="oc-item-qty"> ×'+it.qty+'</span></span><span class="oc-item-price">₱'+(it.price*it.qty).toLocaleString()+'</span></div>';
+    }).join('');
+    var actionsHtml='';
+    if(order.status==='Received'){
+      if(hasReview){
+        actionsHtml='<span class="already-reviewed-tag">⭐ Reviewed</span>';
+      }else{
+        actionsHtml='<button class="btn-review-view" onclick="openReviewModal(\''+order.id+'\')">⭐ Leave a Review</button>';
+      }
+    }else if(order.status!=='Cancelled'){
+      actionsHtml='<button class="btn-received" onclick="openReceivedModal(\''+order.id+'\')">✅ Order Received</button>';
+      if(order.status==='Pending'){
+        actionsHtml+='<button class="btn-cancel" onclick="openCancelModal(\''+order.id+'\')">✕ Cancel Order</button>';
+      }
+    }
+    var cancelBox=order.cancelReason?'<div class="cancel-reason-box"><div class="cancel-reason-lbl">🚫 Cancellation Reason</div>'+order.cancelReason+'</div>':'';
+    html+='<div class="order-card">'
+      +'<div class="oc-hdr">'
+      +'<div class="oc-id-wrap">'
+      +'<span class="oc-id">#'+order.id+'</span>'
+      +'<span class="oc-date">'+formatDate(order.date)+'</span>'
+      +'</div>'
+      +'<span class="oc-status '+statusCls+'">'+order.status.toUpperCase()+'</span>'
+      +'</div>'
+      +'<div class="oc-body">'
+      +'<div class="oc-items">'+itemsHtml+'</div>'
+      +'<div class="oc-meta">'
+      +'<span>📍 '+order.address+'</span>'
+      +'<span>📞 '+order.phone+'</span>'
+      +'<span>💵 Cash on Delivery</span>'
+      +'</div>'
+      +'<div class="oc-total-row"><span class="oc-total-lbl">Order Total</span><span class="oc-total-val">₱'+order.total.toLocaleString()+'</span></div>'
+      +(actionsHtml?'<div class="oc-actions">'+actionsHtml+'</div>':'')
+      +cancelBox
+      +'</div></div>';
+  });
+  el.innerHTML=html;
+  updateBadges();
+}
+
+/* ── ORDER RECEIVED MODAL ── */
+function openReceivedModal(orderId){
+  receivingOrderId=orderId;
+  document.getElementById('confirm-type').value='';
+  document.getElementById('btn-confirm-received').disabled=true;
+  document.getElementById('received-modal').classList.add('open');
+  setTimeout(function(){document.getElementById('confirm-type').focus();},150);
+}
+function closeReceivedModal(){
+  document.getElementById('received-modal').classList.remove('open');
+  receivingOrderId=null;
+}
+document.getElementById('confirm-type').addEventListener('input',function(){
+  document.getElementById('btn-confirm-received').disabled=this.value.trim().toUpperCase()!=='RECEIVED';
+});
+function confirmReceived(){
+  if(!receivingOrderId)return;
+  if(document.getElementById('confirm-type').value.trim().toUpperCase()!=='RECEIVED'){
+    showToast('Please type RECEIVED to confirm.','error');return;
+  }
+  var orders=loadOrders();
+  var order=orders.find(function(o){return o.id===receivingOrderId;});
+  if(!order){showToast('Order not found.','error');closeReceivedModal();return;}
+  order.status='Received';
+  order.receivedAt=new Date().toISOString();
+  saveOrders(orders);
+  /* admin notification */
+  addActivity('g','<strong>Order #'+order.id+'</strong> marked as <strong>Received</strong> by <strong>'+session.name+'</strong>');
+  var reports=loadAdminReports();
+  reports.push({type:'received',orderId:order.id,customerName:session.name,customerEmail:session.email,total:order.total,date:new Date().toISOString()});
+  saveAdminReports(reports);
+  closeReceivedModal();
+  showToast('Order #'+order.id+' confirmed as received!','success');
+  openReviewModal(order.id);
+  renderOrders();
+}
+
+/* ── REVIEW MODAL ── */
+function openReviewModal(orderId){
+  reviewingOrderId=orderId;
+  var orders=loadOrders();
+  var order=orders.find(function(o){return o.id===orderId;});
+  if(!order)return;
+  var html='';
+  order.items.forEach(function(item,idx){
+    html+='<div class="ri-card" id="ri-'+idx+'">'
+      +'<div class="ri-name">'+item.name+'</div>'
+      +'<div class="stars-input" id="stars-'+idx+'">'
+      +'<span class="star" data-val="1" onclick="setStar('+idx+',1)">★</span>'
+      +'<span class="star" data-val="2" onclick="setStar('+idx+',2)">★</span>'
+      +'<span class="star" data-val="3" onclick="setStar('+idx+',3)">★</span>'
+      +'<span class="star" data-val="4" onclick="setStar('+idx+',4)">★</span>'
+      +'<span class="star" data-val="5" onclick="setStar('+idx+',5)">★</span>'
+      +'</div>'
+      +'<textarea class="rv-textarea" id="rv-comment-'+idx+'" placeholder="Share your experience with this product..."></textarea>'
+      +'</div>';
+  });
+  document.getElementById('review-items-list').innerHTML=html;
+  document.getElementById('review-modal').classList.add('open');
+}
+function setStar(itemIdx,val){
+  var stars=document.querySelectorAll('#stars-'+itemIdx+' .star');
+  stars.forEach(function(s){
+    var sv=parseInt(s.getAttribute('data-val'));
+    s.classList.toggle('active',sv<=val);
+  });
+  document.getElementById('stars-'+itemIdx).setAttribute('data-rating',val);
+}
+function skipReview(){
+  document.getElementById('review-modal').classList.remove('open');
+  reviewingOrderId=null;
+  showToast('You can leave a review anytime from your orders.','info');
+}
+function submitReview(){
+  if(!reviewingOrderId)return;
+  var orders=loadOrders();
+  var order=orders.find(function(o){return o.id===reviewingOrderId;});
+  if(!order)return;
+  var reviewItems=[];
+  var hasRating=false;
+  order.items.forEach(function(item,idx){
+    var starsEl=document.getElementById('stars-'+idx);
+    var rating=parseInt(starsEl?starsEl.getAttribute('data-rating')||0:0);
+    var comment=document.getElementById('rv-comment-'+idx)?document.getElementById('rv-comment-'+idx).value.trim():'';
+    if(rating>0)hasRating=true;
+    reviewItems.push({productName:item.name,rating:rating,comment:comment});
+  });
+  if(!hasRating){showToast('Please rate at least one item.','error');return;}
+  var reviews=loadReviews();
+  var entry={id:'rv-'+Date.now(),orderId:order.id,customerId:session.id,customerName:session.name,items:reviewItems,date:new Date().toISOString()};
+  reviews.push(entry);saveReviews(reviews);
+  /* admin notification */
+  addActivity('c','<strong>Review received</strong> from <strong>'+session.name+'</strong> for order #'+order.id);
+  var reports=loadAdminReports();
+  reports.push({type:'review',orderId:order.id,customerName:session.name,review:entry,date:new Date().toISOString()});
+  saveAdminReports(reports);
+  document.getElementById('review-modal').classList.remove('open');
+  reviewingOrderId=null;
+  showToast('Thank you for your review! ⭐','success');
+  renderOrders();
+  updateBadges();
+}
+
+/* ── CANCEL MODAL ── */
+function openCancelModal(orderId){
+  cancellingOrderId=orderId;
+  document.getElementById('cancel-reason-select').value='';
+  document.getElementById('cancel-reason-detail').value='';
+  document.getElementById('cancel-modal').classList.add('open');
+}
+function closeCancelModal(){
+  document.getElementById('cancel-modal').classList.remove('open');
+  cancellingOrderId=null;
+}
+function confirmCancel(){
+  var reason=document.getElementById('cancel-reason-select').value;
+  var detail=document.getElementById('cancel-reason-detail').value.trim();
+  if(!reason){showToast('Please select a cancellation reason.','error');return;}
+  var orders=loadOrders();
+  var order=orders.find(function(o){return o.id===cancellingOrderId;});
+  if(!order){closeCancelModal();return;}
+  var fullReason=reason+(detail?' — '+detail:'');
+  order.status='Cancelled';
+  order.cancelReason=fullReason;
+  order.cancelledAt=new Date().toISOString();
+  /* restore stock */
+  try{
+    var prods=JSON.parse(localStorage.getItem('zenmarket_products'))||[];
+    order.items.forEach(function(item){
+      var p=prods.find(function(x){return x.name===item.name;});
+      if(p)p.stock_qty+=item.qty;
+    });
+    localStorage.setItem('zenmarket_products',JSON.stringify(prods));
+  }catch(e){}
+  saveOrders(orders);
+  /* lockout tracking */
+  var cdata=getCancelData();
+  var cd=cdata[session.id]||{count:0};
+  cd.count=(cd.count||0)+1;
+  cd.lastCancel=new Date().toISOString();
+  if(cd.count>=2){
+    cd.lockoutUntil=Date.now()+(5*60*60*1000); /* 5 hours */
+    cd.count=0;
+  }
+  cdata[session.id]=cd;saveCancelData(cdata);
+  /* admin report */
+  addActivity('r','<strong>Order #'+order.id+'</strong> cancelled by <strong>'+session.name+'</strong> — Reason: '+reason);
+  var reports=loadAdminReports();
+  reports.push({type:'cancellation',orderId:order.id,customerName:session.name,customerEmail:session.email,reason:fullReason,date:new Date().toISOString()});
+  saveAdminReports(reports);
+  closeCancelModal();
+  var lockout=isLockedOut();
+  if(lockout){
+    showToast('⚠ 2 cancellations reached. Ordering restricted for 5 hours.','error');
+  }else{
+    showToast('Order cancelled. Reason submitted to admin.','info');
+  }
+  renderOrders();
+}
+
+/* ── REVIEWS PAGE ── */
+function renderReviews(){
+  var reviews=loadReviews().filter(function(r){return r.customerId===session.id;});
+  var el=document.getElementById('reviews-list');
+  if(!reviews.length){
+    el.innerHTML='<div class="reviews-empty"><div style="font-size:52px;opacity:.3;margin-bottom:14px">⭐</div><div style="font-family:\'Rajdhani\',sans-serif;font-size:1.1rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:7px">No Reviews Yet</div><div style="font-family:\'JetBrains Mono\',monospace;font-size:.68rem;color:var(--text3);letter-spacing:.07em">// You haven\'t left a review yet.<br>Receive an order and share your experience!</div></div>';
+    updateBadges();
+    return;
+  }
+  var html='';
+  reviews.slice().reverse().forEach(function(rv){
+    var itemsHtml=rv.items.map(function(item){
+      var stars='';
+      for(var i=1;i<=5;i++)stars+=(i<=item.rating?'★':'☆');
+      var commentHtml=item.comment?'<div class="rv-comment">'+item.comment+'</div>':'<div style="font-family:\'JetBrains Mono\',monospace;font-size:.65rem;color:var(--text3)">No comment</div>';
+      return item.rating>0?'<div class="rv-item"><div class="rv-item-name">'+item.productName+'</div><div class="stars-display">'+stars+'</div>'+commentHtml+'</div>':'';
+    }).filter(Boolean).join('');
+    html+='<div class="review-card">'
+      +'<div class="rv-hdr"><span class="rv-order-id">Order #'+rv.orderId+'</span><span class="rv-date">'+formatDate(rv.date)+'</span></div>'
+      +itemsHtml
+      +'</div>';
+  });
+  el.innerHTML=html;
+  updateBadges();
+}
+
+function doLogout(){
+  document.body.classList.add('leaving');
+  setTimeout(function(){sessionStorage.removeItem('zm_cust_session');window.location.href='customer-login.html';},250);
+}
+
+/* ── INIT ── */
+renderOrders();
+updateBadges();
+</script>
+</body>
+</html>

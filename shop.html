@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Zen Market — Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Rajdhani:wght@700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#080a0e;--surface:#0f1117;--surface2:#151820;--border:#1e2230;--border2:#252a3a;--accent:#00e5ff;--green:#00ff9d;--yellow:#ffd166;--red:#ff4d6d;--text:#dce3f0;--text2:#8b95b0;--text3:#4a5068;--sw:220px}
+html,body{height:100%}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,229,255,.012) 2px,rgba(0,229,255,.012) 4px)}
+.page-wrap{flex:1;min-width:0;margin-left:var(--sw);display:flex;flex-direction:column;position:relative;z-index:1;opacity:0;animation:pageIn .3s ease forwards}
+@keyframes pageIn{to{opacity:1}}
+body.leaving .page-wrap{animation:pageOut .25s ease forwards}
+@keyframes pageOut{to{opacity:0;transform:translateY(-8px)}}
+.sidebar{width:var(--sw);min-height:100vh;background:var(--surface);border-right:1px solid var(--border2);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:10}
+.sb-logo{padding:26px 22px 20px;border-bottom:1px solid var(--border)}
+.logo{font-family:'Rajdhani',sans-serif;font-size:1.45rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.logo span{color:var(--accent);text-shadow:0 0 14px rgba(0,229,255,.5)}
+.logo-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-left:4px;vertical-align:middle;box-shadow:0 0 8px rgba(0,255,157,.7);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.sb-sub{font-family:'JetBrains Mono',monospace;font-size:.57rem;letter-spacing:.12em;color:var(--text3);text-transform:uppercase;margin-top:4px}
+.nav{flex:1;padding:18px 12px;display:flex;flex-direction:column;gap:4px}
+.nav-lbl{font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.16em;color:var(--text3);text-transform:uppercase;padding:0 10px;margin:10px 0 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:.875rem;font-weight:600;color:var(--text2);text-decoration:none;border:1px solid transparent;background:none;cursor:pointer;width:100%;text-align:left;transition:all .12s;font-family:'Space Grotesk',sans-serif}
+.nav-item:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.nav-item.active{background:rgba(0,229,255,.08);color:var(--accent);border-color:rgba(0,229,255,.15)}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.nav-badge{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:.6rem;padding:1px 7px;border-radius:3px;background:rgba(255,209,102,.15);color:var(--yellow)}
+.sb-footer{padding:16px 12px;border-top:1px solid var(--border)}
+.user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border2);cursor:pointer;transition:border-color .15s}
+.user-card:hover{border-color:rgba(0,229,255,.3)}
+.avatar{width:32px;height:32px;border-radius:8px;background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.2);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:.85rem;font-weight:700;color:var(--accent);flex-shrink:0;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.u-name{font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px}
+.u-role{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+.logout-btn{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;transition:color .12s;padding:4px;flex-shrink:0}
+.logout-btn:hover{color:var(--red)}
+.main{flex:1;width:100%;padding:34px 30px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+.page-title{font-family:'Rajdhani',sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.page-title span{color:var(--accent)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.search-wrap{position:relative}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.4;pointer-events:none}
+.search-input{background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:8px 12px 8px 34px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.8rem;outline:none;width:190px;transition:border-color .14s,box-shadow .14s}
+.search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,229,255,.1)}
+.search-input::placeholder{color:var(--text3)}
+.cart-btn{position:relative;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);color:var(--accent);border-radius:8px;padding:8px 16px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.82rem;display:flex;align-items:center;gap:7px;transition:all .13s;white-space:nowrap}
+.cart-btn:hover{background:rgba(0,229,255,.18);box-shadow:0 0 20px rgba(0,229,255,.15)}
+.cart-count-badge{position:absolute;top:-7px;right:-7px;background:var(--red);color:#fff;min-width:18px;height:18px;border-radius:9px;padding:0 4px;font-family:'JetBrains Mono',monospace;font-size:.6rem;display:none;align-items:center;justify-content:center}
+.cart-count-badge.show{display:flex}
+.lockout-banner{display:none;align-items:flex-start;gap:14px;background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.25);border-radius:10px;padding:16px 18px;margin-bottom:20px}
+.lockout-banner.show{display:flex}
+.lb-icon{font-size:22px;flex-shrink:0}
+.lb-title{font-weight:700;color:var(--red);font-size:.9rem}
+.lb-sub{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:rgba(255,77,109,.75);margin-top:4px;line-height:1.5}
+.filter-bar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px}
+.filter-chip{font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.07em;padding:5px 13px;border-radius:6px;border:1px solid var(--border2);color:var(--text3);background:transparent;cursor:pointer;transition:all .13s;white-space:nowrap}
+.filter-chip:hover{color:var(--text2)}
+.filter-chip.active{background:rgba(0,229,255,.1);border-color:rgba(0,229,255,.28);color:var(--accent)}
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.product-card{background:var(--surface);border:1px solid var(--border2);border-radius:14px;overflow:hidden;transition:all .15s;display:flex;flex-direction:column}
+.product-card:hover{border-color:rgba(0,229,255,.28);box-shadow:0 0 28px rgba(0,229,255,.06);transform:translateY(-2px)}
+/* Product image area - shows image or fallback icon */
+.pc-img{height:130px;background:var(--surface2);display:flex;align-items:center;justify-content:center;position:relative;border-bottom:1px solid var(--border);overflow:hidden}
+.pc-img img{width:100%;height:100%;object-fit:cover}
+.pc-img-fallback{font-size:40px}
+.pc-no-img{display:flex;flex-direction:column;align-items:center;gap:4px}
+.pc-no-img-icon{font-size:32px;opacity:.35}
+.pc-no-img-txt{font-family:'JetBrains Mono',monospace;font-size:.55rem;color:var(--text3);letter-spacing:.06em}
+.pc-cat-tag{position:absolute;top:8px;left:8px;font-family:'JetBrains Mono',monospace;font-size:.55rem;letter-spacing:.08em;padding:3px 8px;border-radius:4px;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.2);color:var(--accent)}
+.pc-body{padding:13px;flex:1;display:flex;flex-direction:column;gap:3px}
+.pc-name{font-weight:700;font-size:.9rem;line-height:1.3}
+.pc-brand{font-family:'JetBrains Mono',monospace;font-size:.63rem;color:var(--text3);margin-top:2px}
+.pc-specs{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--text2);margin-top:3px;line-height:1.4}
+.pc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding:11px 13px;border-top:1px solid var(--border)}
+.pc-price{font-family:'Rajdhani',sans-serif;font-size:1.15rem;font-weight:700;color:var(--yellow);display:block}
+.stock-pill{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.58rem;padding:2px 7px;border-radius:3px;margin-top:2px}
+.p-ok{background:rgba(0,255,157,.07);border:1px solid rgba(0,255,157,.2);color:var(--green)}
+.p-low{background:rgba(255,209,102,.07);border:1px solid rgba(255,209,102,.2);color:var(--yellow)}
+.p-out{background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.2);color:var(--red)}
+.pc-add{background:linear-gradient(135deg,var(--accent),#0099ff);color:#080a0e;border:none;border-radius:7px;padding:7px 13px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.77rem;transition:all .13s;white-space:nowrap}
+.pc-add:hover:not([disabled]){box-shadow:0 0 18px rgba(0,229,255,.3);transform:translateY(-1px)}
+.pc-add[disabled]{opacity:.35;cursor:not-allowed;transform:none!important;background:#2a3050;color:var(--text3)}
+.pc-add.in-cart{background:rgba(0,255,157,.12);border:1px solid rgba(0,255,157,.28);color:var(--green)}
+.pc-add.in-cart:hover:not([disabled]){background:rgba(0,255,157,.2);box-shadow:none}
+.empty-state{text-align:center;padding:80px 20px}
+.empty-icon{font-size:60px;opacity:.35;margin-bottom:14px}
+.empty-title{font-family:'Rajdhani',sans-serif;font-size:1.1rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:7px}
+.empty-sub{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text3);letter-spacing:.07em}
+/* CART */
+.cart-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;backdrop-filter:blur(3px)}
+.cart-overlay.open{display:block}
+.cart-drawer{position:fixed;top:0;right:-350px;width:340px;height:100vh;background:var(--surface);border-left:1px solid var(--border2);z-index:101;display:flex;flex-direction:column;transition:right .28s cubic-bezier(.22,.68,0,1.2)}
+.cart-drawer.open{right:0}
+.cart-hdr{display:flex;align-items:center;justify-content:space-between;padding:22px 20px;border-bottom:1px solid var(--border)}
+.cart-title{font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.cart-title span{color:var(--accent)}
+.cart-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1;padding:4px;transition:color .12s}
+.cart-close:hover{color:var(--red)}
+.cart-items-list{flex:1;overflow-y:auto;padding:12px}
+.cart-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--text3)}
+.cart-empty-icon{font-size:44px;opacity:.4}
+.cart-empty-txt{font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase}
+.cart-item{display:flex;align-items:center;gap:10px;padding:11px;background:var(--surface2);border:1px solid var(--border2);border-radius:9px;margin-bottom:8px}
+.ci-icon{width:34px;height:34px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.15);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;overflow:hidden}
+.ci-icon img{width:100%;height:100%;object-fit:cover}
+.ci-info{flex:1;min-width:0}
+.ci-name{font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-price{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--yellow);margin-top:2px}
+.ci-qty{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.qty-btn{width:22px;height:22px;border-radius:5px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .1s;flex-shrink:0}
+.qty-btn:hover{border-color:var(--accent);color:var(--accent)}
+.qty-val{font-family:'JetBrains Mono',monospace;font-size:.78rem;min-width:18px;text-align:center}
+.ci-remove{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:4px;transition:color .12s;flex-shrink:0}
+.ci-remove:hover{color:var(--red)}
+.cart-footer{padding:16px 20px;border-top:1px solid var(--border)}
+.cart-total-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.ct-label{font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:.12em;color:var(--text3);text-transform:uppercase}
+.ct-value{font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;color:var(--yellow)}
+.btn-checkout{width:100%;background:linear-gradient(135deg,var(--accent),#0099ff);color:#080a0e;border:none;border-radius:9px;padding:13px;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:.05em;transition:all .15s;box-shadow:0 0 22px rgba(0,229,255,.18)}
+.btn-checkout:hover:not([disabled]){box-shadow:0 0 34px rgba(0,229,255,.32);transform:translateY(-1px)}
+.btn-checkout[disabled]{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(4,6,12,.88);backdrop-filter:blur(6px);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:30px;width:100%;max-width:520px;margin:20px;animation:slideUp .2s ease;box-shadow:0 0 60px rgba(0,229,255,.06);max-height:92vh;overflow-y:auto}
+@keyframes slideUp{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-hdr{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+.modal-ico{width:36px;height:36px;border-radius:9px;background:rgba(0,229,255,.09);border:1px solid rgba(0,229,255,.2);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.cod-badge{display:flex;align-items:center;gap:8px;background:rgba(0,255,157,.06);border:1px solid rgba(0,255,157,.18);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--green);letter-spacing:.06em}
+.order-summary{background:var(--surface2);border:1px solid var(--border2);border-radius:9px;padding:13px;margin-bottom:16px;max-height:150px;overflow-y:auto}
+.os-item{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:.83rem}
+.os-item:last-child{border-bottom:none}
+.os-qty{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text3)}
+.os-price{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--yellow)}
+.os-total-row{display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border2)}
+.os-total-lbl{font-weight:700;font-size:.88rem}
+.os-total-val{font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;color:var(--yellow)}
+.form-section-lbl{font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.16em;color:var(--accent);text-transform:uppercase;margin-bottom:12px;margin-top:18px;padding-bottom:6px;border-bottom:1px solid var(--border2)}
+.form-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-full{grid-column:1/-1}
+.form-group{margin-bottom:14px}
+.form-lbl{display:block;font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.14em;color:var(--text3);text-transform:uppercase;margin-bottom:7px}
+.form-input{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:9px 12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.83rem;outline:none;transition:border-color .14s,box-shadow .14s}
+.form-textarea{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:9px 12px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:.83rem;outline:none;min-height:72px;resize:vertical;transition:border-color .14s,box-shadow .14s}
+.form-input:focus,.form-textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,229,255,.1)}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--text3)}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.btn-ghost{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.82rem;background:transparent;color:var(--text2);border:1px solid var(--border2);padding:9px 20px;border-radius:7px;cursor:pointer;transition:all .12s}
+.btn-ghost:hover{border-color:var(--text2);color:var(--text)}
+.btn-primary{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.82rem;background:linear-gradient(135deg,var(--accent),#0099ff);color:#080a0e;border:none;padding:9px 22px;border-radius:7px;cursor:pointer;box-shadow:0 0 18px rgba(0,229,255,.18);transition:all .14s}
+.btn-primary:hover:not([disabled]){box-shadow:0 0 26px rgba(0,229,255,.32);transform:translateY(-1px)}
+.btn-primary[disabled]{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+/* Profile modal */
+.profile-section{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:16px;margin-bottom:14px}
+.profile-avatar-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.profile-avatar-big{width:54px;height:54px;border-radius:12px;background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.2);display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:1.3rem;font-weight:700;color:var(--accent);overflow:hidden;flex-shrink:0}
+.profile-avatar-big img{width:100%;height:100%;object-fit:cover}
+.upload-btn-lbl{font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.08em;background:rgba(0,229,255,.09);border:1px solid rgba(0,229,255,.22);color:var(--accent);padding:7px 14px;border-radius:6px;cursor:pointer;transition:all .13s;display:inline-block}
+.upload-btn-lbl:hover{background:rgba(0,229,255,.16)}
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{font-family:'Space Grotesk',sans-serif;font-size:.82rem;font-weight:600;padding:12px 18px;border-radius:9px;border:1px solid;display:flex;align-items:center;gap:10px;min-width:220px;animation:toastIn .3s ease;box-shadow:0 4px 24px rgba(0,0,0,.4)}
+.toast.removing{animation:toastOut .3s ease forwards}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(20px)}}
+.toast-success{background:rgba(0,255,157,.08);border-color:rgba(0,255,157,.25);color:var(--green)}
+.toast-error{background:rgba(255,77,109,.08);border-color:rgba(255,77,109,.25);color:var(--red)}
+.toast-info{background:rgba(0,229,255,.08);border-color:rgba(0,229,255,.25);color:var(--accent)}
+.toast-icon{font-size:14px}
+@media(max-width:660px){.sidebar{display:none}.page-wrap{margin-left:0}.main{padding:20px 16px}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="logo">ZEN <span>MKT</span><span class="logo-dot"></span></div>
+    <div class="sb-sub">// Customer Shop</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-lbl">Navigation</div>
+    <a class="nav-item active" href="shop.html"><span class="nav-icon">🛍️</span> Shop</a>
+    <a class="nav-item" href="track-order.html"><span class="nav-icon">📦</span> Track Orders<span class="nav-badge" id="order-badge" style="display:none">0</span></a>
+  </nav>
+  <div class="sb-footer">
+    <div class="user-card" onclick="openProfileModal()" title="Edit your profile">
+      <div class="avatar" id="user-avatar">?</div>
+      <div style="min-width:0">
+        <div class="u-name" id="user-name">Customer</div>
+        <div class="u-role">Customer</div>
+      </div>
+      <button class="logout-btn" onclick="event.stopPropagation();doLogout()" title="Logout">✕</button>
+    </div>
+  </div>
+</aside>
+
+<div class="page-wrap">
+  <main class="main">
+    <div class="topbar">
+      <div class="page-title">SHOP <span>NOW</span></div>
+      <div class="topbar-right">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" type="text" id="search-input" placeholder="Search..." oninput="renderProducts()"/>
+        </div>
+        <button class="cart-btn" onclick="openCart()">
+          🛒 Cart
+          <span class="cart-count-badge" id="cart-count-badge">0</span>
+        </button>
+      </div>
+    </div>
+    <div class="lockout-banner" id="lockout-banner">
+      <div class="lb-icon">🚫</div>
+      <div>
+        <div class="lb-title">Ordering Temporarily Restricted</div>
+        <div class="lb-sub" id="lockout-msg">You cannot order again. Please wait until the restriction is lifted.</div>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <button class="filter-chip active" data-cat="" onclick="setFilter(this,'')">All</button>
+      <button class="filter-chip" data-cat="Processor" onclick="setFilter(this,'Processor')">Processor</button>
+      <button class="filter-chip" data-cat="GPU" onclick="setFilter(this,'GPU')">GPU</button>
+      <button class="filter-chip" data-cat="RAM" onclick="setFilter(this,'RAM')">RAM</button>
+      <button class="filter-chip" data-cat="Storage" onclick="setFilter(this,'Storage')">Storage</button>
+      <button class="filter-chip" data-cat="Motherboard" onclick="setFilter(this,'Motherboard')">Motherboard</button>
+      <button class="filter-chip" data-cat="PSU" onclick="setFilter(this,'PSU')">PSU</button>
+      <button class="filter-chip" data-cat="CPU Cooler" onclick="setFilter(this,'CPU Cooler')">CPU Cooler</button>
+      <button class="filter-chip" data-cat="Case Fans" onclick="setFilter(this,'Case Fans')">Case Fans</button>
+      <button class="filter-chip" data-cat="PC Case" onclick="setFilter(this,'PC Case')">PC Case</button>
+      <button class="filter-chip" data-cat="Peripherals" onclick="setFilter(this,'Peripherals')">Peripherals</button>
+      <button class="filter-chip" data-cat="Other" onclick="setFilter(this,'Other')">Other</button>
+    </div>
+    <div id="product-grid" class="product-grid"></div>
+  </main>
+</div>
+
+<!-- CART DRAWER -->
+<div class="cart-overlay" id="cart-overlay" onclick="closeCart()"></div>
+<div class="cart-drawer" id="cart-drawer">
+  <div class="cart-hdr">
+    <div class="cart-title">MY <span>CART</span></div>
+    <button class="cart-close" onclick="closeCart()">✕</button>
+  </div>
+  <div class="cart-items-list" id="cart-items-list">
+    <div class="cart-empty"><div class="cart-empty-icon">🛒</div><div class="cart-empty-txt">Your cart is empty</div></div>
+  </div>
+  <div class="cart-footer">
+    <div class="cart-total-row">
+      <span class="ct-label">Total</span>
+      <span class="ct-value" id="cart-total">₱0</span>
+    </div>
+    <button class="btn-checkout" id="btn-checkout" onclick="openCheckout()">Proceed to Checkout →</button>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="modal-overlay" id="checkout-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-ico">📋</div>
+      <div class="modal-title">Confirm Order</div>
+    </div>
+    <div class="cod-badge">💵 &nbsp; Cash on Delivery — Payment upon arrival</div>
+    <div class="order-summary" id="modal-summary"></div>
+
+    <div class="form-section-lbl">📍 Delivery Information</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--text3);margin-bottom:12px">Fill in your delivery details. This info will be saved to your profile for future orders.</div>
+
+    <div class="form-grid2">
+      <div class="form-full">
+        <label class="form-lbl">Full Name</label>
+        <input class="form-input" type="text" id="inp-fullname" placeholder="Your full name"/>
+      </div>
+      <div class="form-full">
+        <label class="form-lbl">Delivery Address</label>
+        <textarea class="form-textarea" id="inp-address" placeholder="House No., Street, Barangay, City, Province"></textarea>
+      </div>
+      <div>
+        <label class="form-lbl">Contact Number</label>
+        <input class="form-input" type="tel" id="inp-phone" placeholder="e.g. 0917-123-4567"/>
+      </div>
+      <div>
+        <label class="form-lbl">Email</label>
+        <input class="form-input" type="email" id="inp-email" placeholder="your@email.com"/>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeCheckout()">Cancel</button>
+      <button class="btn-primary" id="btn-place-order" onclick="placeOrder()">Place Order 🎉</button>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOMER PROFILE MODAL -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-ico">👤</div>
+      <div class="modal-title">My Profile</div>
+    </div>
+    <div class="profile-section">
+      <div class="profile-avatar-row">
+        <div class="profile-avatar-big" id="profile-avatar-big">?</div>
+        <div>
+          <label class="upload-btn-lbl" for="profile-img-input">📷 Upload Photo</label>
+          <input type="file" id="profile-img-input" accept="image/*" style="display:none" onchange="handleProfileImage(event)"/>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--text3);margin-top:5px">JPG, PNG · Max 2MB</div>
+          <button onclick="clearProfileImage()" style="font-family:'JetBrains Mono',monospace;font-size:.6rem;background:none;border:none;color:var(--red);cursor:pointer;margin-top:4px">✕ Remove photo</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-section-lbl">Personal Information</div>
+    <div class="form-group">
+      <label class="form-lbl">Nickname / Display Name</label>
+      <input class="form-input" type="text" id="pf-nickname" placeholder="How you want to be called"/>
+    </div>
+    <div class="form-group">
+      <label class="form-lbl">Full Name</label>
+      <input class="form-input" type="text" id="pf-fullname" placeholder="Your full name for deliveries"/>
+    </div>
+    <div class="form-group">
+      <label class="form-lbl">Phone Number</label>
+      <input class="form-input" type="tel" id="pf-phone" placeholder="e.g. 0917-123-4567"/>
+    </div>
+    <div class="form-group">
+      <label class="form-lbl">Default Delivery Address</label>
+      <textarea class="form-textarea" id="pf-address" placeholder="House No., Street, Barangay, City, Province" style="min-height:60px"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-lbl">Email</label>
+      <input class="form-input" type="email" id="pf-email" placeholder="your@email.com" readonly style="opacity:.6;cursor:not-allowed"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeProfileModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveCustomerProfile()">Save Profile</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ── EmailJS Config ───────────────────────────────────────────────
+emailjs.init('3W2wwTK90SQ-vsnXS');
+var EJ_SERVICE  = 'service_ewvvdej';
+var EJ_RECEIPT_T = 'template_ufj0jkh';
+
+function sendReceiptEmail(order){
+  var itemsText=order.items.map(function(i){
+    return i.name+' x'+i.qty+' — ₱'+(i.price*i.qty).toLocaleString();
+  }).join('\n');
+  var receiptEmail=order.customerEmail||'';
+  if(!receiptEmail)return;
+  emailjs.send(EJ_SERVICE, EJ_RECEIPT_T, {
+    to_name:  order.customerName,
+    to_email: receiptEmail,
+    order_id: order.id,
+    order_date: new Date(order.date).toLocaleString('en-PH',{dateStyle:'long',timeStyle:'short'}),
+    address:  order.address,
+    items:    itemsText,
+    total:    '₱'+order.total.toLocaleString()
+  }).then(function(){
+    console.log('Receipt sent to '+receiptEmail);
+  },function(err){
+    console.warn('Receipt email failed:',err);
+  });
+}
+
+var session=null;
+try{session=JSON.parse(sessionStorage.getItem('zm_cust_session'));}catch(e){}
+if(!session){window.location.replace('customer-login.html');}
+
+var PRODUCTS_KEY='zenmarket_products';
+var ORDERS_KEY='zm_orders';
+var CANCEL_DATA_KEY='zm_cancel_data';
+var ACTIVITY_KEY='zenmarket_activity';
+var CUST_PROFILE_KEY='zm_cust_profiles';
+
+var cart=[];
+var activeFilter='';
+var tempProfileImage=null;
+
+function loadCustProfile(){
+  try{var d=JSON.parse(localStorage.getItem(CUST_PROFILE_KEY))||{};return d[session.id]||{};}catch(e){return {};}
+}
+function saveCustProfile(p){
+  try{var d=JSON.parse(localStorage.getItem(CUST_PROFILE_KEY))||{};d[session.id]=p;localStorage.setItem(CUST_PROFILE_KEY,JSON.stringify(d));}catch(e){}
+}
+
+function applyCustSession(){
+  var p=loadCustProfile();
+  var displayName=p.nickname||session.name;
+  document.getElementById('user-name').textContent=displayName;
+  var av=document.getElementById('user-avatar');
+  if(p.avatar){av.innerHTML='<img src="'+p.avatar+'" alt="avatar"/>';}
+  else{av.textContent=displayName.charAt(0).toUpperCase();}
+}
+applyCustSession();
+
+function loadProducts(){try{return JSON.parse(localStorage.getItem(PRODUCTS_KEY))||[];}catch(e){return[];}}
+function saveProducts(arr){localStorage.setItem(PRODUCTS_KEY,JSON.stringify(arr));}
+function loadOrders(){try{return JSON.parse(localStorage.getItem(ORDERS_KEY))||[];}catch(e){return[];}}
+function saveOrders(arr){localStorage.setItem(ORDERS_KEY,JSON.stringify(arr));}
+function getCancelData(){try{return JSON.parse(localStorage.getItem(CANCEL_DATA_KEY))||{};}catch(e){return{};}}
+
+function isLockedOut(){
+  var data=getCancelData(),d=data[session.id];
+  if(d&&d.lockoutUntil&&Date.now()<d.lockoutUntil)return d.lockoutUntil;
+  return null;
+}
+function formatCountdown(until){
+  var ms=until-Date.now();
+  if(ms<=0)return'Restriction lifted!';
+  var h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);
+  return h+'h '+m+'m '+s+'s remaining';
+}
+var lockoutTimer=null;
+function checkLockout(){
+  var until=isLockedOut(),banner=document.getElementById('lockout-banner');
+  if(until){
+    banner.classList.add('show');
+    document.getElementById('lockout-msg').textContent='You cannot order again. Please wait until 5 hours before you can order. ('+formatCountdown(until)+')';
+    document.getElementById('btn-checkout').disabled=true;
+    if(!lockoutTimer){
+      lockoutTimer=setInterval(function(){
+        var u=isLockedOut();
+        if(!u){banner.classList.remove('show');document.getElementById('btn-checkout').disabled=false;clearInterval(lockoutTimer);lockoutTimer=null;renderProducts();showToast('Ordering restriction lifted! You can shop again.','info');}
+        else{document.getElementById('lockout-msg').textContent='You cannot order again. Please wait until 5 hours before you can order. ('+formatCountdown(u)+')';}
+      },1000);
+    }
+  }else{banner.classList.remove('show');document.getElementById('btn-checkout').disabled=false;}
+}
+
+var CAT_ICONS={Processor:'💻',RAM:'🟦',GPU:'🎮',Storage:'💾',Motherboard:'🖥️',PSU:'🔌','CPU Cooler':'❄️','Case Fans':'🌀','PC Case':'📦',Peripherals:'🖱️',Other:'⚡','Graphics Card':'🎮',Cooler:'❄️',Case:'📦',Peripheral:'🖱️'};
+function catIcon(cat){return CAT_ICONS[cat]||'⚡';}
+
+// Migrate old category names to new ones
+(function migrateCats(){
+  var CAT_MAP={'Graphics Card':'GPU','Cooler':'CPU Cooler','Case':'PC Case','Peripheral':'Peripherals'};
+  try{
+    var prods=JSON.parse(localStorage.getItem('zenmarket_products'));
+    if(!prods)return;
+    var changed=false;
+    prods.forEach(function(p){if(CAT_MAP[p.category]){p.category=CAT_MAP[p.category];changed=true;}});
+    if(changed)localStorage.setItem('zenmarket_products',JSON.stringify(prods));
+  }catch(e){}
+})();
+
+function showToast(msg,type){
+  type=type||'success';
+  var icons={success:'✓',error:'✕',info:'ℹ'};
+  var c=document.getElementById('toast-container');
+  var t=document.createElement('div');
+  t.className='toast toast-'+type;
+  t.innerHTML='<span class="toast-icon">'+icons[type]+'</span><span>'+msg+'</span>';
+  c.appendChild(t);
+  setTimeout(function(){t.classList.add('removing');setTimeout(function(){t.remove();},300);},3000);
+}
+
+function updateOrderBadge(){
+  var orders=loadOrders().filter(function(o){return o.customerId===session.id;});
+  var badge=document.getElementById('order-badge');
+  if(orders.length>0){badge.textContent=orders.length;badge.style.display='';}
+  else{badge.style.display='none';}
+}
+
+function getCartTotal(){return cart.reduce(function(s,i){return s+i.price*i.qty;},0);}
+function getCartCount(){return cart.reduce(function(s,i){return s+i.qty;},0);}
+
+function updateCartCountBadge(){
+  var count=getCartCount();
+  var el=document.getElementById('cart-count-badge');
+  el.textContent=count;
+  if(count>0)el.classList.add('show');else el.classList.remove('show');
+  document.getElementById('cart-total').textContent='₱'+getCartTotal().toLocaleString();
+}
+
+function renderCartItems(){
+  var el=document.getElementById('cart-items-list');
+  if(!cart.length){
+    el.innerHTML='<div class="cart-empty"><div class="cart-empty-icon">🛒</div><div class="cart-empty-txt">Your cart is empty</div></div>';
+    return;
+  }
+  var html='';
+  cart.forEach(function(item,idx){
+    var iconHtml=item.image?'<img src="'+item.image+'" alt="product"/>':catIcon(item.category);
+    html+='<div class="cart-item">'
+      +'<div class="ci-icon">'+iconHtml+'</div>'
+      +'<div class="ci-info"><div class="ci-name">'+item.name+'</div><div class="ci-price">₱'+item.price.toLocaleString()+' each</div></div>'
+      +'<div class="ci-qty">'
+      +'<button class="qty-btn" onclick="adjustQty('+idx+',-1)">−</button>'
+      +'<span class="qty-val">'+item.qty+'</span>'
+      +'<button class="qty-btn" onclick="adjustQty('+idx+',1)">+</button>'
+      +'</div>'
+      +'<button class="ci-remove" onclick="removeItem('+idx+')" title="Remove">✕</button>'
+      +'</div>';
+  });
+  el.innerHTML=html;
+}
+
+function addToCart(productIndex){
+  if(isLockedOut()){showToast('Ordering is restricted. Please wait.','error');return;}
+  var products=loadProducts(),p=products[productIndex];
+  if(!p||p.stock_qty===0){showToast('This product is out of stock.','error');return;}
+  var existing=cart.find(function(i){return i.productIndex===productIndex;});
+  if(existing){
+    if(existing.qty>=p.stock_qty){showToast('Maximum available stock reached!','error');return;}
+    existing.qty++;
+  }else{
+    cart.push({productIndex:productIndex,name:p.name,brand:p.brand||'',category:p.category,price:p.price,qty:1,maxQty:p.stock_qty,image:p.image||null});
+  }
+  showToast('"'+p.name+'" added to cart!','success');
+  updateCartCountBadge();renderCartItems();renderProducts();
+}
+
+function adjustQty(idx,delta){
+  var item=cart[idx];if(!item)return;
+  item.qty+=delta;
+  if(item.qty>item.maxQty){item.qty=item.maxQty;showToast('Max stock reached.','info');}
+  if(item.qty<1){removeItem(idx);return;}
+  updateCartCountBadge();renderCartItems();
+}
+function removeItem(idx){cart.splice(idx,1);updateCartCountBadge();renderCartItems();renderProducts();}
+function openCart(){renderCartItems();document.getElementById('cart-overlay').classList.add('open');document.getElementById('cart-drawer').classList.add('open');}
+function closeCart(){document.getElementById('cart-overlay').classList.remove('open');document.getElementById('cart-drawer').classList.remove('open');}
+
+function setFilter(btn,cat){
+  activeFilter=cat;
+  document.querySelectorAll('.filter-chip').forEach(function(c){c.classList.remove('active');});
+  btn.classList.add('active');
+  renderProducts();
+}
+
+function productImageHtml(p){
+  if(p.image){
+    return'<img src="'+p.image+'" alt="'+p.name+'" style="width:100%;height:100%;object-fit:cover"/>';
+  }
+  return'<div class="pc-no-img"><div class="pc-no-img-icon">📷</div><div class="pc-no-img-txt">No Product Image</div></div>';
+}
+
+function renderProducts(){
+  var products=loadProducts();
+  var query=document.getElementById('search-input').value.toLowerCase();
+  var locked=!!isLockedOut();
+  var filtered=products.filter(function(p){
+    var matchQ=!query||(p.name.toLowerCase().includes(query)||(p.brand||'').toLowerCase().includes(query)||(p.category||'').toLowerCase().includes(query));
+    var matchF=!activeFilter||p.category===activeFilter;
+    return matchQ&&matchF;
+  });
+  var grid=document.getElementById('product-grid');
+  if(!filtered.length){
+    grid.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No Products Found</div><div class="empty-sub">// Try a different search or filter</div></div>';
+    return;
+  }
+  var html='';
+  filtered.forEach(function(p){
+    var realIdx=products.indexOf(p);
+    var inCart=cart.find(function(c){return c.productIndex===realIdx;});
+    var isOut=p.stock_qty===0;
+    var isLow=p.stock_qty>0&&p.stock_qty<=3;
+    var pill=isOut?'<span class="stock-pill p-out">OUT OF STOCK</span>':isLow?'<span class="stock-pill p-low">'+p.stock_qty+' left</span>':'<span class="stock-pill p-ok">In Stock</span>';
+    var btnLabel=inCart?'✓ In Cart':'Add to Cart';
+    var btnClass='pc-add'+(inCart?' in-cart':'');
+    var disabled=(isOut||locked)?'disabled':'';
+    html+='<div class="product-card">'
+      +'<div class="pc-img">'+productImageHtml(p)+'<span class="pc-cat-tag">'+p.category+'</span></div>'
+      +'<div class="pc-body">'
+      +'<div class="pc-name">'+p.name+'</div>'
+      +'<div class="pc-brand">'+((p.brand&&p.brand!=='—')?p.brand:'Generic')+'</div>'
+      +'<div class="pc-specs">'+((p.specs&&p.specs!=='—')?p.specs:'—')+'</div>'
+      +'</div>'
+      +'<div class="pc-footer">'
+      +'<div><span class="pc-price">₱'+p.price.toLocaleString()+'</span>'+pill+'</div>'
+      +'<button class="'+btnClass+'" onclick="addToCart('+realIdx+')" '+disabled+'>'+btnLabel+'</button>'
+      +'</div></div>';
+  });
+  grid.innerHTML=html;
+}
+
+// CHECKOUT
+function openCheckout(){
+  if(!cart.length){showToast('Your cart is empty.','error');return;}
+  if(isLockedOut()){showToast('Ordering is restricted. Please wait.','error');return;}
+  var html='';
+  cart.forEach(function(item){
+    html+='<div class="os-item"><span>'+item.name+'<span class="os-qty"> ×'+item.qty+'</span></span><span class="os-price">₱'+(item.price*item.qty).toLocaleString()+'</span></div>';
+  });
+  html+='<div class="os-total-row"><span class="os-total-lbl">Total</span><span class="os-total-val">₱'+getCartTotal().toLocaleString()+'</span></div>';
+  document.getElementById('modal-summary').innerHTML=html;
+  // Pre-fill from profile
+  var p=loadCustProfile();
+  document.getElementById('inp-fullname').value=p.fullname||session.name||'';
+  document.getElementById('inp-address').value=p.address||'';
+  document.getElementById('inp-phone').value=p.phone||'';
+  document.getElementById('inp-email').value=p.email||session.email||'';
+  closeCart();
+  document.getElementById('checkout-modal').classList.add('open');
+}
+function closeCheckout(){document.getElementById('checkout-modal').classList.remove('open');}
+
+function placeOrder(){
+  if(isLockedOut()){showToast('Ordering is restricted.','error');return;}
+  var fullname=document.getElementById('inp-fullname').value.trim();
+  var address=document.getElementById('inp-address').value.trim();
+  var phone=document.getElementById('inp-phone').value.trim();
+  var email=document.getElementById('inp-email').value.trim();
+  if(!fullname){showToast('Please enter your full name.','error');document.getElementById('inp-fullname').focus();return;}
+  if(!address){showToast('Please enter your delivery address.','error');document.getElementById('inp-address').focus();return;}
+  if(!phone){showToast('Please enter your contact number.','error');document.getElementById('inp-phone').focus();return;}
+  // Save to profile for next time
+  var p=loadCustProfile();
+  p.fullname=fullname;p.address=address;p.phone=phone;p.email=email;
+  saveCustProfile(p);
+  var btn=document.getElementById('btn-place-order');
+  btn.disabled=true;btn.textContent='Processing...';
+  setTimeout(function(){
+    var products=loadProducts();
+    for(var ci=0;ci<cart.length;ci++){
+      var item=cart[ci],pr=products[item.productIndex];
+      if(!pr||pr.stock_qty<item.qty){showToast('"'+(pr?pr.name:'A product')+'" no longer has enough stock.','error');btn.disabled=false;btn.textContent='Place Order 🎉';renderProducts();return;}
+    }
+    var orderId='ORD-'+Date.now().toString(36).toUpperCase().slice(-6);
+    var orderItems=cart.map(function(item){return{name:item.name,qty:item.qty,price:item.price};});
+    var order={id:orderId,customerId:session.id,customerName:fullname,customerEmail:email||session.email,items:orderItems,total:getCartTotal(),address:address,phone:phone,status:'Pending',paymentMethod:'Cash on Delivery',date:new Date().toISOString(),cancelReason:null};
+    var orders=loadOrders();orders.push(order);saveOrders(orders);
+    cart.forEach(function(item){products[item.productIndex].stock_qty-=item.qty;});
+    saveProducts(products);
+    try{
+      var acts=JSON.parse(localStorage.getItem(ACTIVITY_KEY))||[];
+      acts.push({type:'g',text:'<strong>New Order</strong> #'+orderId+' from <strong>'+fullname+'</strong> (₱'+getCartTotal().toLocaleString()+') — COD',time:'Just now'});
+      if(acts.length>30)acts=acts.slice(-30);
+      localStorage.setItem(ACTIVITY_KEY,JSON.stringify(acts));
+    }catch(e){}
+    cart=[];
+    updateCartCountBadge();closeCheckout();renderProducts();
+    btn.disabled=false;btn.textContent='Place Order 🎉';
+    showToast('Order #'+orderId+' placed! Cash on Delivery.','success');
+    setTimeout(function(){document.body.classList.add('leaving');setTimeout(function(){window.location.href='track-order.html';},260);},1400);
+  },700);
+}
+
+// CUSTOMER PROFILE MODAL
+function openProfileModal(){
+  var p=loadCustProfile();
+  document.getElementById('pf-nickname').value=p.nickname||'';
+  document.getElementById('pf-fullname').value=p.fullname||session.name||'';
+  document.getElementById('pf-phone').value=p.phone||'';
+  document.getElementById('pf-address').value=p.address||'';
+  document.getElementById('pf-email').value=p.email||session.email||'';
+  tempProfileImage=null;
+  var av=document.getElementById('profile-avatar-big');
+  if(p.avatar){av.innerHTML='<img src="'+p.avatar+'" alt="avatar" style="width:100%;height:100%;object-fit:cover"/>';}
+  else{av.textContent=(p.nickname||session.name||'?').charAt(0).toUpperCase();}
+  document.getElementById('profile-modal').classList.add('open');
+}
+function closeProfileModal(){document.getElementById('profile-modal').classList.remove('open');tempProfileImage=null;}
+function handleProfileImage(e){
+  var file=e.target.files[0];if(!file)return;
+  if(file.size>2*1024*1024){showToast('Image must be under 2MB.','error');return;}
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    tempProfileImage=ev.target.result;
+    var av=document.getElementById('profile-avatar-big');
+    av.innerHTML='<img src="'+tempProfileImage+'" alt="avatar" style="width:100%;height:100%;object-fit:cover"/>';
+  };
+  reader.readAsDataURL(file);
+}
+function clearProfileImage(){
+  tempProfileImage=null;
+  var p=loadCustProfile();
+  var n=p.nickname||session.name||'?';
+  document.getElementById('profile-avatar-big').textContent=n.charAt(0).toUpperCase();
+  document.getElementById('profile-img-input').value='';
+}
+function saveCustomerProfile(){
+  var nickname=document.getElementById('pf-nickname').value.trim();
+  var fullname=document.getElementById('pf-fullname').value.trim();
+  var phone=document.getElementById('pf-phone').value.trim();
+  var address=document.getElementById('pf-address').value.trim();
+  var email=document.getElementById('pf-email').value.trim();
+  var p=loadCustProfile();
+  p.nickname=nickname;p.fullname=fullname||session.name;p.phone=phone;p.address=address;p.email=email||session.email;
+  if(tempProfileImage!==null)p.avatar=tempProfileImage;
+  saveCustProfile(p);
+  applyCustSession();
+  closeProfileModal();
+  showToast('Profile saved!','success');
+}
+
+function doLogout(){
+  document.body.classList.add('leaving');
+  setTimeout(function(){sessionStorage.removeItem('zm_cust_session');window.location.href='customer-login.html';},250);
+}
+
+checkLockout();
+updateCartCountBadge();
+updateOrderBadge();
+renderProducts();
+</script>
+</body>
+</html>
